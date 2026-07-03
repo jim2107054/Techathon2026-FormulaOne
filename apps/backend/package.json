@@ -13,7 +13,7 @@
     "smoke-test": "ts-node src/scripts/smokeTest.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.110.0",
+    "@google/genai": "^2.10.0",
     "@prisma/client": "^6.19.3",
     "@techathon/shared-types": "*",
     "cors": "^2.8.5",
