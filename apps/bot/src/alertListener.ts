@@ -32,7 +32,7 @@ export function startAlertListener(client: Client) {
       }
 
       const textChannel = channel as { send: (content: string) => Promise<unknown> };
-      await textChannel.send(`Warning: ${response.data.text}`);
+      await textChannel.send(`⚠️ ${response.data.text}`);
       postedAlertIds.add(alert.id);
     } catch (error) {
       console.error("Failed to post proactive alert:", error);

@@ -1,57 +1,97 @@
 import type { RoomWithDevices, UsageSummary } from "@techathon/shared-types";
 
+/*
+ * These builders produce the friendly, conversational text the bot/dashboard use directly
+ * when the LLM layer is unavailable (deterministic fallback). Every number is kept exact.
+ * When GEMINI_API_KEY is set, this same text is handed to the model as the base to reword.
+ */
+
+const ROOM_LABELS: Record<string, string> = {
+  drawing: "Drawing Room",
+  work1: "Work Room 1",
+  work2: "Work Room 2",
+};
+
+function prettyRoomName(name: string) {
+  return ROOM_LABELS[name] ?? name;
+}
+
+// "A" | "A and B" | "A, B and C"
+function joinNatural(items: string[]) {
+  if (items.length <= 1) {
+    return items[0] ?? "";
+  }
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 export function buildStatusFacts(rooms: RoomWithDevices[]) {
   if (rooms.length === 0) {
-    return "No rooms are configured yet. No power is being drawn.";
+    return "There aren't any rooms set up yet, so nothing's drawing power at the moment.";
   }
 
   const allDevices = rooms.flatMap((room) => room.devices);
   const devicesOn = allDevices.filter((device) => device.status === "on");
 
   if (devicesOn.length === 0) {
-    return `All ${allDevices.length} devices are currently off. No power is being drawn.`;
+    return `Good news — everything's off across all ${allDevices.length} devices, so nothing's drawing power right now. 🌙`;
   }
 
-  return rooms
-    .map((room) => {
-      const fansOn = room.devices.filter(
-        (device) => device.type === "fan" && device.status === "on",
-      ).length;
-      const lightsOn = room.devices.filter(
-        (device) => device.type === "light" && device.status === "on",
-      ).length;
+  const clauses = rooms.map((room) => {
+    const fansOn = room.devices.filter(
+      (device) => device.type === "fan" && device.status === "on",
+    ).length;
+    const lightsOn = room.devices.filter(
+      (device) => device.type === "light" && device.status === "on",
+    ).length;
 
-      if (fansOn === 0 && lightsOn === 0) {
-        return `${room.displayName}: all off.`;
-      }
+    const bits: string[] = [];
+    if (fansOn > 0) {
+      bits.push(`${fansOn} fan${fansOn === 1 ? "" : "s"}`);
+    }
+    if (lightsOn > 0) {
+      bits.push(`${lightsOn} light${lightsOn === 1 ? "" : "s"}`);
+    }
 
-      return `${room.displayName}: ${fansOn} fan${fansOn === 1 ? "" : "s"} ON, ${lightsOn} light${lightsOn === 1 ? "" : "s"} ON.`;
-    })
-    .join(" ");
+    if (bits.length === 0) {
+      return `${room.displayName} is all off`;
+    }
+    return `${room.displayName} has ${joinNatural(bits)} on`;
+  });
+
+  return `Here's the office right now — ${joinNatural(clauses)}.`;
 }
 
 export function buildRoomFacts(room: RoomWithDevices | null) {
   if (!room) {
-    return "That room doesn't exist. Valid rooms are: Drawing Room, Work Room 1, Work Room 2.";
+    return "Hmm, I couldn't find that room. Try Drawing Room, Work Room 1, or Work Room 2.";
   }
 
   const devicesOn = room.devices.filter((device) => device.status === "on");
+  const devicesOff = room.devices.filter((device) => device.status !== "on");
 
   if (devicesOn.length === 0) {
-    return `${room.displayName} is fully off right now. No devices are drawing power there.`;
+    return `${room.displayName} is all quiet — every device is off, so nothing's drawing power there. 👍`;
   }
 
-  const deviceSummaries = room.devices.map((device) => {
-    return `${device.name} is ${device.status.toUpperCase()}`;
-  });
+  const onNames = joinNatural(devicesOn.map((device) => device.name));
+  let text = `${room.displayName} has ${devicesOn.length} device${
+    devicesOn.length === 1 ? "" : "s"
+  } on right now: ${onNames} ${devicesOn.length === 1 ? "is" : "are"} ON`;
 
-  return `${room.displayName} currently has ${devicesOn.length} device${devicesOn.length === 1 ? "" : "s"} on. ${deviceSummaries.join(", ")}.`;
+  if (devicesOff.length > 0) {
+    const offNames = joinNatural(devicesOff.map((device) => device.name));
+    text += `, while ${offNames} ${devicesOff.length === 1 ? "is" : "are"} off`;
+  }
+
+  return `${text}.`;
 }
 
 export function buildUsageFacts(usage: UsageSummary) {
-  const perRoomText = Object.entries(usage.perRoomWatts)
-    .map(([roomName, watts]) => `${roomName} is using ${watts}W`)
-    .join(". ");
+  const perRoom = Object.entries(usage.perRoomWatts)
+    .map(([roomName, watts]) => `${prettyRoomName(roomName)} ${watts}W`)
+    .join(", ");
 
-  return `Total power right now: ${usage.totalWattsNow}W. Today's estimated usage: ${usage.estimatedKwhToday} kWh. ${perRoomText}.`;
+  const base = `Right now the office is pulling ${usage.totalWattsNow}W in total, and we're at about ${usage.estimatedKwhToday} kWh for the day so far.`;
+
+  return perRoom ? `${base} Room by room: ${perRoom}.` : base;
 }

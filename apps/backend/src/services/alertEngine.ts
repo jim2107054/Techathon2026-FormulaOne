@@ -19,6 +19,15 @@ function isOutsideOfficeHours(now: Date) {
   return hour < 9 || hour >= 17;
 }
 
+function formatClock(now: Date) {
+  const hour = now.getHours();
+  const minutes = now.getMinutes();
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const twelveHour = hour % 12 === 0 ? 12 : hour % 12;
+  const paddedMinutes = minutes.toString().padStart(2, "0");
+  return `${twelveHour}:${paddedMinutes} ${suffix}`;
+}
+
 function isContinuousRunRoom(room: RoomWithDevices, now: Date) {
   return (
     room.devices.length > 0 &&
@@ -79,7 +88,7 @@ export function createAlertEngine(deps: AlertEngineDeps) {
               type: "after_hours",
               roomId: device.roomId,
               deviceId: device.id,
-              message: `${device.name} in ${device.room.displayName} is on outside office hours`,
+              message: `Hey! ${device.name} in ${device.room.displayName} is still on and it's ${formatClock(now)} — did someone forget to switch it off?`,
             },
           });
 
@@ -101,11 +110,22 @@ export function createAlertEngine(deps: AlertEngineDeps) {
           continue;
         }
 
+        const fanCount = room.devices.filter(
+          (entry) => entry.type === "fan",
+        ).length;
+        const lightCount = room.devices.filter(
+          (entry) => entry.type === "light",
+        ).length;
+
         const alert = await deps.prismaClient.alert.create({
           data: {
             type: "continuous_run",
             roomId: room.id,
-            message: `${room.displayName} has had all devices on for over 2 hours`,
+            message: `Heads-up — ${room.displayName} still has ${fanCount} fan${
+              fanCount === 1 ? "" : "s"
+            } and ${lightCount} light${
+              lightCount === 1 ? "" : "s"
+            } on, and they've been running non-stop for over 2 hours.`,
           },
         });
 
