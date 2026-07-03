@@ -6,12 +6,14 @@ import rateLimit from "express-rate-limit";
 
 import { env } from "./config/env";
 import { SimulatedDeviceDataSource } from "./iot/SimulatedDeviceDataSource";
+import { setSimulator } from "./iot/simulatorRegistry";
 import { prisma } from "./lib/prisma";
 import { serializeDevice } from "./lib/serializers";
 import { errorHandler, requestLogger } from "./middleware/errorHandler";
 import { initSocket, getIO } from "./realtime/socket";
 import { alertsRouter } from "./routes/alerts";
 import { botQueryRouter } from "./routes/botQuery";
+import { internalRouter } from "./routes/internal";
 import { roomsRouter } from "./routes/rooms";
 import { usageRouter } from "./routes/usage";
 import { recordEnergySnapshot } from "./services/energyAccumulator";
@@ -21,7 +23,7 @@ const app = express();
 const server = http.createServer(app);
 const io = initSocket(server);
 
-app.use(cors());
+app.use(cors({ origin: env.WEB_ORIGIN }));
 app.use(express.json());
 app.use(requestLogger);
 
@@ -48,6 +50,7 @@ app.use("/api", roomsRouter);
 app.use("/api", usageRouter);
 app.use("/api", alertsRouter);
 app.use("/api/bot", botQueryRouter);
+app.use("/internal", internalRouter);
 app.use(errorHandler);
 
 const simulator = new SimulatedDeviceDataSource({
@@ -58,6 +61,8 @@ const simulator = new SimulatedDeviceDataSource({
     await runAlertCheck();
   },
 });
+
+setSimulator(simulator);
 
 simulator.start(async (deviceId, status) => {
   try {

@@ -105,8 +105,9 @@ function buildRoomFixture() {
 }
 
 describe("alertEngine", () => {
-  it("does not create after-hours alerts before 9:00", async () => {
+  it("creates exactly one after-hours alert before 9:00 for an on device", async () => {
     const fixture = buildRoomFixture();
+    fixture.devices = [fixture.devices[0]];
     const prismaClient = createFakePrisma({
       rooms: [fixture.room],
       devices: fixture.devices,
@@ -115,12 +116,44 @@ describe("alertEngine", () => {
     const engine = createAlertEngine({
       prismaClient: prismaClient as never,
       emitAlert: () => undefined,
-      now: () => new Date(2026, 6, 3, 8, 30, 0),
+      now: () => new Date(2026, 6, 3, 7, 30, 0),
     });
 
     await engine.runAlertCheck();
     const alerts = await prismaClient.alert.findMany();
-    expect(alerts).toHaveLength(0);
+    expect(alerts.filter((alert) => alert.type === "after_hours")).toHaveLength(1);
+  });
+
+  it("creates no after-hours alert during office hours and resolves existing ones", async () => {
+    const fixture = buildRoomFixture();
+    fixture.devices = [fixture.devices[0]];
+    const prismaClient = createFakePrisma({
+      rooms: [fixture.room],
+      devices: fixture.devices,
+      alerts: [
+        {
+          id: "alert_after_hours_existing",
+          type: "after_hours",
+          roomId: fixture.room.id,
+          deviceId: fixture.devices[0].id,
+          message: "Existing after-hours alert",
+          createdAt: new Date(),
+          resolved: false,
+        },
+      ],
+    });
+
+    const engine = createAlertEngine({
+      prismaClient: prismaClient as never,
+      emitAlert: () => undefined,
+      now: () => new Date(2026, 6, 3, 12, 0, 0),
+    });
+
+    await engine.runAlertCheck();
+    const alerts = await prismaClient.alert.findMany();
+    const afterHours = alerts.filter((alert) => alert.type === "after_hours");
+    expect(afterHours).toHaveLength(1);
+    expect(afterHours.every((alert) => alert.resolved)).toBe(true);
   });
 
   it("creates exactly one after-hours alert for an on device", async () => {

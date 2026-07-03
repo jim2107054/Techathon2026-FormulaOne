@@ -1,5 +1,6 @@
 import type { Alert, Device, PrismaClient, Room } from "@prisma/client";
 
+import { getNow } from "../lib/clock";
 import { prisma } from "../lib/prisma";
 import { serializeAlert } from "../lib/serializers";
 import { getIO } from "../realtime/socket";
@@ -13,9 +14,9 @@ type AlertEngineDeps = {
 type DeviceWithRoom = Device & { room: Room };
 type RoomWithDevices = Room & { devices: Device[] };
 
-function isAfterHours(now: Date) {
+function isOutsideOfficeHours(now: Date) {
   const hour = now.getHours();
-  return hour >= 17;
+  return hour < 9 || hour >= 17;
 }
 
 function isContinuousRunRoom(room: RoomWithDevices, now: Date) {
@@ -62,7 +63,7 @@ export function createAlertEngine(deps: AlertEngineDeps) {
         now,
       );
 
-      if (isAfterHours(now)) {
+      if (isOutsideOfficeHours(now)) {
         for (const device of devices.filter((entry) => entry.status === "on")) {
           const existingAlert = unresolvedAlerts.find(
             (alert) =>
@@ -78,7 +79,7 @@ export function createAlertEngine(deps: AlertEngineDeps) {
               type: "after_hours",
               roomId: device.roomId,
               deviceId: device.id,
-              message: `${device.name} in ${device.room.displayName} is still on after hours`,
+              message: `${device.name} in ${device.room.displayName} is on outside office hours`,
             },
           });
 
@@ -121,7 +122,7 @@ async function resolveAfterHoursAlerts(
   devices: DeviceWithRoom[],
   now: Date,
 ) {
-  const insideOfficeHours = !isAfterHours(now);
+  const insideOfficeHours = !isOutsideOfficeHours(now);
 
   for (const alert of alerts) {
     const device = devices.find((entry) => entry.id === alert.deviceId);
@@ -158,7 +159,7 @@ const alertEngine = createAlertEngine({
   emitAlert: (alert) => {
     getIO().emit("alert:new", serializeAlert(alert));
   },
-  now: () => new Date(),
+  now: getNow,
 });
 
 export async function runAlertCheck() {

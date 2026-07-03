@@ -6,6 +6,7 @@ dotenv.config();
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   WEB_ORIGIN: z.string().trim().min(1),
+  DATABASE_URL: z.string().trim().min(1),
   BOT_API_KEY: z.string().trim().min(1),
   ANTHROPIC_API_KEY: z.string().trim().optional().or(z.literal("")),
   SIMULATION_INTERVAL_MS: z.coerce.number().int().positive().default(15000),
