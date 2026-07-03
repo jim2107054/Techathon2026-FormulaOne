@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Alert } from "@techathon/shared-types";
 
 import { fetchJson } from "@/lib/api";
@@ -11,30 +11,34 @@ export function useAlerts() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadAlerts = useCallback(async () => {
+    try {
+      const data = await fetchJson<Alert[]>("/api/alerts");
+      setAlerts(data);
+    } catch {
+      // Keep any existing alerts; a later (re)connect will retry the fetch.
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    let active = true;
+    void loadAlerts();
+  }, [loadAlerts]);
 
-    void fetchJson<Alert[]>("/api/alerts")
-      .then((data) => {
-        if (!active) {
-          return;
-        }
+  // Reload the alert backlog on socket (re)connect so the panel self-heals if
+  // it loaded before the backend was up, or the backend restarted.
+  useEffect(() => {
+    const handleConnect = () => {
+      void loadAlerts();
+    };
 
-        setAlerts(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
-
-        setLoading(false);
-      });
+    socket.on("connect", handleConnect);
 
     return () => {
-      active = false;
+      socket.off("connect", handleConnect);
     };
-  }, []);
+  }, [socket, loadAlerts]);
 
   useEffect(() => {
     const handleAlert = (incomingAlert: Alert) => {

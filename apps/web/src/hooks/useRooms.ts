@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Device, RoomWithDevices } from "@techathon/shared-types";
 
 import { fetchJson } from "@/lib/api";
@@ -11,30 +11,36 @@ export function useRooms() {
   const [rooms, setRooms] = useState<RoomWithDevices[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadRooms = useCallback(async () => {
+    try {
+      const data = await fetchJson<RoomWithDevices[]>("/api/rooms");
+      setRooms(data);
+    } catch {
+      // Keep any existing rooms; a later (re)connect will retry the fetch.
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    let active = true;
+    void loadRooms();
+  }, [loadRooms]);
 
-    void fetchJson<RoomWithDevices[]>("/api/rooms")
-      .then((data) => {
-        if (!active) {
-          return;
-        }
+  // Re-fetch the full room list whenever the socket (re)connects, so the
+  // dashboard self-heals if it loaded before the backend was up, or if the
+  // backend restarts mid-session. Without this, an initial fetch that failed
+  // while the backend was down would leave the device list permanently empty.
+  useEffect(() => {
+    const handleConnect = () => {
+      void loadRooms();
+    };
 
-        setRooms(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
-
-        setLoading(false);
-      });
+    socket.on("connect", handleConnect);
 
     return () => {
-      active = false;
+      socket.off("connect", handleConnect);
     };
-  }, []);
+  }, [socket, loadRooms]);
 
   useEffect(() => {
     const handleDeviceUpdate = (updatedDevice: Device) => {
