@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
 import { SimulatedDeviceDataSource } from "./iot/SimulatedDeviceDataSource";
 import { setSimulator } from "./iot/simulatorRegistry";
+import { getNow } from "./lib/clock";
 import { prisma } from "./lib/prisma";
 import { serializeDevice } from "./lib/serializers";
 import { errorHandler, requestLogger } from "./middleware/errorHandler";
@@ -70,7 +71,7 @@ simulator.start(async (deviceId, status) => {
       where: { id: deviceId },
       data: {
         status,
-        lastChangedAt: new Date(),
+        lastChangedAt: getNow(),
       },
     });
 

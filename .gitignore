@@ -4,7 +4,6 @@ dist
 .next
 *.db
 apps/backend/data/
-docs/
 .gemini/
 .cursor/
 .claude/
