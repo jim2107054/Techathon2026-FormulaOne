@@ -1,0 +1,40 @@
+{
+  "name": "@techathon/backend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "db:init": "ts-node src/scripts/bootstrapDb.ts",
+    "db:seed": "prisma db seed",
+    "test": "vitest run src/services/alertEngine.test.ts --pool=threads --exclude dist/**",
+    "smoke-test": "ts-node src/scripts/smokeTest.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@prisma/client": "^6.19.3",
+    "@techathon/shared-types": "*",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.5.2",
+    "prisma": "^6.19.3",
+    "socket.io": "^4.8.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.15",
+    "socket.io-client": "^4.8.3",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.9"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+}

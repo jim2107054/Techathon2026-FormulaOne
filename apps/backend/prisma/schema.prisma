@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  devices     Device[]
+  alerts      Alert[]
+}
+
+model Device {
+  id            String   @id @default(cuid())
+  name          String
+  type          String
+  roomId        String
+  room          Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  status        String   @default("off")
+  wattage       Int
+  lastChangedAt DateTime @default(now())
+  alerts        Alert[]
+
+  @@unique([roomId, name])
+  @@index([roomId])
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  type      String
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  deviceId  String?
+  device    Device?  @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  message   String
+  createdAt DateTime @default(now())
+  resolved  Boolean  @default(false)
+
+  @@index([roomId])
+  @@index([deviceId])
+}
