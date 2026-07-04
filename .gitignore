@@ -3,7 +3,7 @@ node_modules
 dist
 .next
 *.db
-docs/
+apps/backend/data/
 .gemini/
 .cursor/
 .claude/

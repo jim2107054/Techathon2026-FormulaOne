@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import { z } from "zod";
 
 dotenv.config();
@@ -6,8 +6,9 @@ dotenv.config();
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   WEB_ORIGIN: z.string().trim().min(1),
+  DATABASE_URL: z.string().trim().min(1),
   BOT_API_KEY: z.string().trim().min(1),
-  ANTHROPIC_API_KEY: z.string().trim().optional().or(z.literal("")),
+  GEMINI_API_KEY: z.string().trim().optional().or(z.literal("")),
   SIMULATION_INTERVAL_MS: z.coerce.number().int().positive().default(15000),
 });
 
@@ -24,13 +25,13 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-if (!parsed.data.ANTHROPIC_API_KEY) {
+if (!parsed.data.GEMINI_API_KEY) {
   console.warn(
-    "ANTHROPIC_API_KEY is not set. AI responses will use deterministic fallback text.",
+    "GEMINI_API_KEY is not set. AI responses will use deterministic fallback text.",
   );
 }
 
 export const env = {
   ...parsed.data,
-  ANTHROPIC_API_KEY: parsed.data.ANTHROPIC_API_KEY || undefined,
+  GEMINI_API_KEY: parsed.data.GEMINI_API_KEY || undefined,
 };

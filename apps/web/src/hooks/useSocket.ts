@@ -18,7 +18,12 @@ function getSocketInstance() {
 }
 
 export function useSocket() {
-  const [connected, setConnected] = useState(() => getSocketInstance().connected);
+  // Always start "false" so the server-rendered HTML and the first client render
+  // agree. The socket singleton can already be connected on the server (it persists
+  // across SSR requests and dials the backend), which would render "Live" on the
+  // server while the client starts "Disconnected" — a hydration mismatch. Real
+  // connection state is applied after mount in the effect below.
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     const socket = getSocketInstance();

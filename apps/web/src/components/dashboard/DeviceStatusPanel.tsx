@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 
 import { useRooms } from "@/hooks/useRooms";
+import { formatRelativeTime } from "@/lib/time";
 
 export function DeviceStatusPanel() {
   const { rooms } = useRooms();
@@ -68,6 +69,9 @@ export function DeviceStatusPanel() {
                             {device.wattage} W
                           </div>
                         ) : null}
+                        <div className="text-[10px] font-medium text-pos-textMuted">
+                          changed {formatRelativeTime(new Date(device.lastChangedAt))}
+                        </div>
                       </div>
                     </div>
                   );

@@ -1,18 +1,43 @@
+import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 type TopBarProps = {
   title: string;
   connected: boolean;
+  sidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
 };
 
-export function TopBar({ title, connected }: TopBarProps) {
+export function TopBar({
+  title,
+  connected,
+  onToggleSidebar,
+  sidebarCollapsed,
+}: TopBarProps) {
   return (
-    <header className="flex items-center justify-between border-b border-pos-borderLight bg-white px-5 py-4 lg:px-8">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-pos-textMuted">
-          Live Dashboard
-        </p>
-        <h2 className="text-2xl font-extrabold text-pos-textPrimary">{title}</h2>
+    <header className="flex flex-col gap-4 border-b border-pos-borderLight bg-white px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          className="hidden rounded-lg border border-pos-borderLight bg-white p-2 text-pos-textPrimary transition hover:bg-slate-50 lg:inline-flex"
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-pressed={sidebarCollapsed}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
+        <div className="relative w-full max-w-sm">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-pos-textMuted"
+          />
+          <input
+            type="search"
+            placeholder="Search"
+            className="h-[34px] w-full rounded-lg border border-pos-borderLight bg-white pl-9 pr-3 text-[13px] font-normal text-[#000000] outline-none transition focus:border-[#0D6EFD] focus:ring-[3px] focus:ring-[rgba(13,110,253,0.1)]"
+          />
+        </div>
       </div>
       <div
         className={cn(

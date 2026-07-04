@@ -1,5 +1,6 @@
 import type { Alert, Device, PrismaClient, Room } from "@prisma/client";
 
+import { getNow } from "../lib/clock";
 import { prisma } from "../lib/prisma";
 import { serializeAlert } from "../lib/serializers";
 import { getIO } from "../realtime/socket";
@@ -13,9 +14,18 @@ type AlertEngineDeps = {
 type DeviceWithRoom = Device & { room: Room };
 type RoomWithDevices = Room & { devices: Device[] };
 
-function isAfterHours(now: Date) {
+function isOutsideOfficeHours(now: Date) {
   const hour = now.getHours();
-  return hour >= 17;
+  return hour < 9 || hour >= 17;
+}
+
+function formatClock(now: Date) {
+  const hour = now.getHours();
+  const minutes = now.getMinutes();
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const twelveHour = hour % 12 === 0 ? 12 : hour % 12;
+  const paddedMinutes = minutes.toString().padStart(2, "0");
+  return `${twelveHour}:${paddedMinutes} ${suffix}`;
 }
 
 function isContinuousRunRoom(room: RoomWithDevices, now: Date) {
@@ -62,7 +72,7 @@ export function createAlertEngine(deps: AlertEngineDeps) {
         now,
       );
 
-      if (isAfterHours(now)) {
+      if (isOutsideOfficeHours(now)) {
         for (const device of devices.filter((entry) => entry.status === "on")) {
           const existingAlert = unresolvedAlerts.find(
             (alert) =>
@@ -78,7 +88,7 @@ export function createAlertEngine(deps: AlertEngineDeps) {
               type: "after_hours",
               roomId: device.roomId,
               deviceId: device.id,
-              message: `${device.name} in ${device.room.displayName} is still on after hours`,
+              message: `Hey! ${device.name} in ${device.room.displayName} is still on and it's ${formatClock(now)} — did someone forget to switch it off?`,
             },
           });
 
@@ -100,11 +110,22 @@ export function createAlertEngine(deps: AlertEngineDeps) {
           continue;
         }
 
+        const fanCount = room.devices.filter(
+          (entry) => entry.type === "fan",
+        ).length;
+        const lightCount = room.devices.filter(
+          (entry) => entry.type === "light",
+        ).length;
+
         const alert = await deps.prismaClient.alert.create({
           data: {
             type: "continuous_run",
             roomId: room.id,
-            message: `${room.displayName} has had all devices on for over 2 hours`,
+            message: `Heads-up — ${room.displayName} still has ${fanCount} fan${
+              fanCount === 1 ? "" : "s"
+            } and ${lightCount} light${
+              lightCount === 1 ? "" : "s"
+            } on, and they've been running non-stop for over 2 hours.`,
           },
         });
 
@@ -121,7 +142,7 @@ async function resolveAfterHoursAlerts(
   devices: DeviceWithRoom[],
   now: Date,
 ) {
-  const insideOfficeHours = !isAfterHours(now);
+  const insideOfficeHours = !isOutsideOfficeHours(now);
 
   for (const alert of alerts) {
     const device = devices.find((entry) => entry.id === alert.deviceId);
@@ -158,7 +179,7 @@ const alertEngine = createAlertEngine({
   emitAlert: (alert) => {
     getIO().emit("alert:new", serializeAlert(alert));
   },
-  now: () => new Date(),
+  now: getNow,
 });
 
 export async function runAlertCheck() {
