@@ -7,7 +7,6 @@ import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DeviceStatusPanel } from "@/components/dashboard/DeviceStatusPanel";
 import { PowerMeter } from "@/components/dashboard/PowerMeter";
 import { ReconnectingBanner } from "@/components/dashboard/ReconnectingBanner";
-import { FloorPlanLegend } from "@/components/floorplan/FloorPlanLegend";
 import { OfficeFloorPlan } from "@/components/floorplan/OfficeFloorPlan";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { useAlerts } from "@/hooks/useAlerts";
@@ -89,9 +88,6 @@ export default function DashboardPage() {
             </div>
           </div>
           <OfficeFloorPlan devices={devices} roomsById={roomsById} />
-          <div className="mt-4">
-            <FloorPlanLegend />
-          </div>
         </div>
         <AlertsPanel />
       </section>
