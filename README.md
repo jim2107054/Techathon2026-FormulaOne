@@ -19,21 +19,13 @@ Office lights and fans are easy to leave running after people leave, and nobody 
 - `packages/shared-types`: Shared TypeScript contracts
 - `docs`: Demo script, API contract, deployment notes, and all project diagrams
 
-## Diagrams Included In This Repository
-- [Architecture diagram](docs/architecture-diagram.svg)
-- [Circuit schematic](docs/circuit-schematic.svg)
-- [Architecture write-up](docs/architecture.md)
-- [Hardware schematic notes](docs/hardware-schematic.md)
-- [API contract](docs/api-contract.md)
-- [Deployment notes](docs/DEPLOYMENT.md)
-
 ## Architecture
-![Architecture Diagram](docs/architecture-diagram.svg)
+![Architecture Diagram](docs/system_architecture.png)
 
 Architecture summary: the simulated device layer runs inside the backend and updates device state in SQLite through Prisma. The same backend serves REST data to the dashboard and Discord bot, emits live Socket.IO events to the dashboard, and runs the alert engine that creates and resolves alerts from current device state.
 
 ## Hardware Concept
-![Circuit Schematic](docs/circuit-schematic.svg)
+![Circuit Schematic](docs/Circuit_Schematic.png)
 
 The hardware demo models one representative room with an ESP32, relay-driven fans, LED light stand-ins, and an optional ACS712 current sensor. The same pattern extends to the full office layout of 3 rooms.
 
@@ -75,8 +67,6 @@ Required values:
 - `BOT_API_KEY=...` and it must match the backend value
 - `ALERT_CHANNEL_ID=...` optional depending on your Discord setup
 
-More detail is documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and [docs/ENV_CONVENTIONS.md](docs/ENV_CONVENTIONS.md).
-
 ## Install Dependencies
 
 ```bash
@@ -92,7 +82,58 @@ npm run db:init -w apps/backend
 npm run db:seed -w apps/backend
 ```
 
-This creates the SQLite database and seeds the 3 demo rooms with their devices.
+What each command does:
+- `npx prisma generate -w apps/backend`
+  Generates the Prisma client required by the backend scripts and API.
+- `npm run db:init -w apps/backend`
+  Runs `apps/backend/src/scripts/bootstrapDb.ts`, which loads `apps/backend/prisma/migrations/202607031915_init/migration.sql` and creates the SQLite schema.
+- `npm run db:seed -w apps/backend`
+  Runs `apps/backend/prisma/seed.ts`, which inserts the representative office dummy data into the database.
+
+What the seed script creates:
+- 3 rooms: `drawing`, `work1`, `work2`
+- 15 devices total
+- 2 fans per room at `60W` each
+- 3 lights per room at `15W` each
+- all devices start as `off`
+- every device receives an initial `lastChangedAt` timestamp
+
+Important judge note:
+- The generated SQLite file `apps/backend/dev.db` is local runtime data and does not need to be committed.
+- The reproducible setup is the committed code in `apps/backend/src/scripts/bootstrapDb.ts` and `apps/backend/prisma/seed.ts`.
+- A judge can recreate the same dataset locally by running the three commands above.
+
+Expected seed result:
+
+```text
+Seeded 3 rooms, 15 devices, 6 fans, 9 lights.
+```
+
+After this step, the backend simulator mutates that seeded data over time, so the dashboard and bot always have live-changing values to display.
+
+## Dummy Data And DB Scripts
+
+### Dummy data generator / seed script
+- File: `apps/backend/prisma/seed.ts`
+- Purpose: inserts the initial office dataset used by the dashboard and Discord bot
+- Behavior:
+  - upserts all 3 rooms
+  - upserts 2 fans and 3 lights for each room
+  - assigns fixed wattages used by the live power calculations
+  - resets device status to `off` on each seed run so the demo starts from a known state
+
+### DB init / bootstrap script
+- File: `apps/backend/src/scripts/bootstrapDb.ts`
+- Purpose: creates the database schema from the checked-in SQL migration
+- Behavior:
+  - reads `apps/backend/prisma/migrations/202607031915_init/migration.sql`
+  - executes the SQL statements against the SQLite database from `DATABASE_URL`
+  - prints `Database schema initialized.` on success
+
+### Why this matters for judges
+- Judges do not need your local `dev.db` file.
+- Judges do need the committed bootstrap script, seed script, and setup instructions so they can reproduce the exact demo dataset themselves.
+- This repository includes all three, so the data setup is reviewable and repeatable.
 
 ## Run The Full Project
 
@@ -145,13 +186,17 @@ npm run dev:bot
 5. Check that alerts appear for simulated after-hours or long-running conditions.
 
 ## Live Demo Links
-- Dashboard URL: `TBD`
-- Discord bot access note: invite the deployed bot to the judging server and share the command list there
+- Video Demo: https://drive.google.com/file/d/1fQZNrkTEpG4OS9DCRD2D0Ghjm0p3VgmM/view?usp=sharing
 
 ## AI / Model Attribution
 The AI phrasing layer uses Google's Gemini (`gemini-2.0-flash`). It is used only to rewrite already-computed facts into friendlier wording. Device state, power logic, alert rules, and system decisions are deterministic and still work when the AI layer is unavailable. Set `GEMINI_API_KEY` to enable it; without a key the bot serves deterministic fallback text.
 
 ## Team
 - Team name: `FormulaOne`
-- Members: `TBD`
+- MD Jahid Hasan Jim
+  GitHub: https://github.com/jim2107054
+- Sheikh Md. Galib Mahim
+  GitHub: https://github.com/SheikhGalib
+- Arka Braja Prasad Nath
+  GitHub: https://github.com/AriyaArKa
 
