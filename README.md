@@ -25,7 +25,7 @@ Office lights and fans are easy to leave running after people leave, and nobody 
 Architecture summary: the simulated device layer runs inside the backend and updates device state in SQLite through Prisma. The same backend serves REST data to the dashboard and Discord bot, emits live Socket.IO events to the dashboard, and runs the alert engine that creates and resolves alerts from current device state.
 
 ## Hardware Concept
-![Circuit Schematic](docs/circuit-schematic.svg)
+![Circuit Schematic](docs/Circuit_Schematic.png)
 
 The hardware demo models one representative room with an ESP32, relay-driven fans, LED light stand-ins, and an optional ACS712 current sensor. The same pattern extends to the full office layout of 3 rooms.
 
@@ -186,8 +186,7 @@ npm run dev:bot
 5. Check that alerts appear for simulated after-hours or long-running conditions.
 
 ## Live Demo Links
-- Dashboard URL: `TBD`
-- Discord bot access note: invite the deployed bot to the judging server and share the command list there
+- Video Demo: https://drive.google.com/file/d/1fQZNrkTEpG4OS9DCRD2D0Ghjm0p3VgmM/view?usp=sharing
 
 ## AI / Model Attribution
 The AI phrasing layer uses Google's Gemini (`gemini-2.0-flash`). It is used only to rewrite already-computed facts into friendlier wording. Device state, power logic, alert rules, and system decisions are deterministic and still work when the AI layer is unavailable. Set `GEMINI_API_KEY` to enable it; without a key the bot serves deterministic fallback text.
