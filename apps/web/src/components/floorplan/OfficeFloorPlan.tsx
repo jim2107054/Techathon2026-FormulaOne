@@ -204,11 +204,6 @@ export function OfficeFloorPlan({ devices, roomsById = {} }: OfficeFloorPlanProp
               </g>
             ))
           )}
-          <text x={room.x + ROOM_W / 2} y={230} textAnchor="middle" fontSize="16" fontWeight="800" fill="#26313C">
-            {roomsById && Object.values(roomsById).find((entry) => entry.name === room.name)?.displayName?.toUpperCase()
-              ? Object.values(roomsById).find((entry) => entry.name === room.name)!.displayName.toUpperCase()
-              : room.displayName}
-          </text>
           {placements.map((placement) => renderDevice(room.name, placement, room.x))}
         </g>
       ))}
@@ -222,6 +217,27 @@ export function OfficeFloorPlan({ devices, roomsById = {} }: OfficeFloorPlanProp
       <line x1="300" y1={ROOM_TOP} x2="300" y2={ROOM_BOTTOM} stroke="#3E434A" strokeWidth="4" />
       <line x1="572" y1={ROOM_TOP} x2="572" y2={ROOM_BOTTOM} stroke="#3E434A" strokeWidth="4" />
       <line x1="28" y1={ROOM_BOTTOM} x2="844" y2={ROOM_BOTTOM} stroke="#3E434A" strokeWidth="5" />
+
+      {/* room titles above the wall stroke so they remain fully visible */}
+      {rooms.map((room) => (
+        <text
+          key={`${room.name}-title`}
+          x={room.x + ROOM_W / 2}
+          y={78}
+          textAnchor="middle"
+          fontSize="15"
+          fontWeight="800"
+          fill="#26313C"
+        >
+          {roomsById &&
+          Object.values(roomsById).find((entry) => entry.name === room.name)
+            ?.displayName?.toUpperCase()
+            ? Object.values(roomsById)
+                .find((entry) => entry.name === room.name)!
+                .displayName.toUpperCase()
+            : room.displayName}
+        </text>
+      ))}
 
       {/* windows on the outer walls */}
       <rect x="120" y={ROOM_TOP - 6} width="96" height="8" fill="#CFEAF6" stroke="#9DC4DA" strokeWidth="0.8" />

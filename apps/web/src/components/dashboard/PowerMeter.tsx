@@ -6,7 +6,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  LabelList,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -15,23 +14,66 @@ import {
 import { KpiCard } from "@/components/ui/KpiCard";
 import { useUsage } from "@/hooks/useUsage";
 
-export function PowerMeter() {
+type PowerMeterProps = {
+  compact?: boolean;
+};
+
+export function PowerMeter({ compact = false }: PowerMeterProps) {
   const { usage } = useUsage();
 
-  const chartData = Object.entries(usage.perRoomWatts).map(([roomName, watts]) => ({
-    roomName,
-    watts,
-  }));
+  const chartData = Object.entries(usage.perRoomWatts).map(([roomName, watts]) => {
+    const shortName =
+      roomName === "Drawing Room"
+        ? "Drawing"
+        : roomName === "Work Room 1"
+          ? "Work 1"
+          : roomName === "Work Room 2"
+            ? "Work 2"
+            : roomName;
 
-  return (
-    <section className="rounded-card bg-white p-5 shadow-card">
-      <div className="mb-5">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-pos-textMuted">
-          Required Panel
-        </p>
-        <h3 className="text-xl font-extrabold text-pos-textPrimary">Power Meter</h3>
-      </div>
-      <div className="mb-5">
+    return {
+      roomName,
+      shortName,
+      watts,
+      remainder: Math.max(0, 100 - watts),
+    };
+  });
+
+  const chart = (
+    <div className="h-[230px] rounded-lg border border-pos-borderLight bg-white p-3">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={chartData} margin={{ top: 6, right: 8, bottom: 2, left: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E6EAED" vertical={false} />
+          <XAxis
+            dataKey="shortName"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#646B72", fontSize: 11, fontWeight: 600 }}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#646B72", fontSize: 11, fontWeight: 600 }}
+            width={36}
+          />
+          <Bar dataKey="watts" stackId="usage" radius={[8, 8, 0, 0]}>
+            {chartData.map((entry) => (
+              <Cell key={entry.roomName} fill="#FE9F43" />
+            ))}
+          </Bar>
+          <Bar dataKey="remainder" stackId="usage" radius={[8, 8, 0, 0]}>
+            {chartData.map((entry) => (
+              <Cell key={`${entry.roomName}-remainder`} fill="#FDE2C4" />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <>
         <KpiCard
           icon={Zap}
           label="Total Power"
@@ -39,38 +81,32 @@ export function PowerMeter() {
           sublabel={`${usage.estimatedKwhToday} kWh today`}
           variant="orange"
         />
+        {chart}
+      </>
+    );
+  }
+
+  return (
+    <section className="rounded-lg border border-pos-borderLight bg-white p-4">
+      <div className="mb-4">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-pos-textMuted">
+          Required Panel
+        </p>
+        <h3 className="text-[20px] font-bold leading-[24px] text-pos-textPrimary">
+          Power Meter
+        </h3>
       </div>
-      <div className="h-72 rounded-card border border-pos-borderLight bg-slate-50 p-3">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            layout="vertical"
-            data={chartData}
-            margin={{ top: 10, right: 30, bottom: 10, left: 10 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#E6EAED" horizontal={false} />
-            <XAxis type="number" hide />
-            <YAxis
-              type="category"
-              dataKey="roomName"
-              tickLine={false}
-              axisLine={false}
-              width={110}
-              tick={{ fill: "#212B36", fontSize: 12, fontWeight: 700 }}
-            />
-            <Bar dataKey="watts" radius={[0, 8, 8, 0]}>
-              {chartData.map((entry) => (
-                <Cell key={entry.roomName} fill="#092C4C" />
-              ))}
-              <LabelList
-                dataKey="watts"
-                position="right"
-                fill="#212B36"
-                fontSize={12}
-                fontWeight={800}
-              />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
+        <div>
+          <KpiCard
+            icon={Zap}
+            label="Total Power"
+            value={`${usage.totalWattsNow} W`}
+            sublabel={`${usage.estimatedKwhToday} kWh today`}
+            variant="orange"
+          />
+        </div>
+        {chart}
       </div>
     </section>
   );

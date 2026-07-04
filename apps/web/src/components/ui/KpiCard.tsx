@@ -12,16 +12,16 @@ type KpiCardProps = {
 
 const variantStyles = {
   orange: {
-    badge: "bg-pos-orange/15 text-pos-orange",
-    hover: "hover:shadow-kpiOrange",
+    badge: "bg-white text-pos-orange",
+    card: "border border-pos-borderLight bg-pos-orange text-white",
   },
   navy: {
-    badge: "bg-pos-navy/10 text-pos-navy",
-    hover: "hover:shadow-kpiNavy",
+    badge: "bg-white text-pos-navy",
+    card: "border border-pos-borderLight bg-pos-navy text-white",
   },
   green: {
-    badge: "bg-pos-green/10 text-pos-green",
-    hover: "hover:shadow-kpiGreen",
+    badge: "bg-white text-pos-green",
+    card: "border border-pos-borderLight bg-[#10B981] text-white",
   },
 };
 
@@ -35,24 +35,21 @@ export function KpiCard({
   const styles = variantStyles[variant];
 
   return (
-    <article
-      className={cn(
-        "rounded-card bg-white p-5 shadow-card transition-shadow",
-        styles.hover,
-      )}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-pos-textMuted">
+    <article className={cn("flex min-h-[156px] flex-col rounded-lg p-4", styles.card)}>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[13px] font-bold uppercase tracking-[0.1em] text-white/85">
           {label}
         </p>
-        <div className={cn("rounded-full p-3", styles.badge)}>
-          <Icon size={20} />
+        <div className={cn("rounded-lg p-2.5", styles.badge)}>
+          <Icon size={18} />
         </div>
       </div>
-      <div className="text-3xl font-extrabold text-pos-textPrimary">{value}</div>
-      {sublabel ? (
-        <p className="mt-2 text-sm font-semibold text-pos-textMuted">{sublabel}</p>
-      ) : null}
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="text-[34px] font-bold leading-[40px] text-white">{value}</div>
+        {sublabel ? (
+          <p className="mt-2 text-[14px] leading-[21px] text-white/85">{sublabel}</p>
+        ) : null}
+      </div>
     </article>
   );
 }

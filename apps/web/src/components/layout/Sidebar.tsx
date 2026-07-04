@@ -1,19 +1,55 @@
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, RadioTower } from "lucide-react";
 
-export function Sidebar() {
+import { cn } from "@/lib/utils";
+
+type SidebarProps = {
+  collapsed: boolean;
+};
+
+export function Sidebar({ collapsed }: SidebarProps) {
   return (
-    <aside className="hidden w-64 shrink-0 bg-pos-navy px-6 py-8 text-white lg:block">
-      <div className="mb-10">
-        <div className="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-white/60">
-          FormulaOne
+    <aside
+      className={cn(
+        "hidden shrink-0 border-r border-pos-borderLight bg-white py-6 text-pos-textPrimary transition-[width,padding] duration-200 lg:block",
+        collapsed ? "w-24 px-3" : "w-64 px-5",
+      )}
+    >
+      <div className={cn("mb-8", collapsed ? "text-center" : "")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-pos-orange/10 text-pos-orange">
+            <RadioTower size={20} />
+          </div>
+          {!collapsed ? (
+            <div>
+              <div className="text-sm font-bold uppercase tracking-[0.28em] text-pos-orange">
+                FormulaOne
+              </div>
+              <h1 className="text-xl font-extrabold text-pos-textPrimary">
+                Office Monitor
+              </h1>
+            </div>
+          ) : null}
         </div>
-        <h1 className="text-2xl font-extrabold">Office Monitor</h1>
       </div>
-      <nav>
-        <div className="flex items-center gap-3 rounded-card bg-white/10 px-4 py-3 text-sm font-bold">
-          <LayoutDashboard size={18} />
-          Dashboard
+
+      {!collapsed ? (
+        <div className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.2em] text-pos-textMuted">
+          Main
         </div>
+      ) : null}
+
+      <nav className="space-y-2">
+        <a
+          href="#overview"
+          className={cn(
+            "flex rounded-lg border-l-[3px] border-pos-orange bg-pos-orange/10 text-sm font-bold text-pos-orange",
+            collapsed ? "justify-center px-2 py-3" : "items-center gap-3 px-4 py-3",
+          )}
+          title="Dashboard"
+        >
+          <LayoutDashboard size={18} />
+          {!collapsed ? <span>Dashboard</span> : null}
+        </a>
       </nav>
     </aside>
   );

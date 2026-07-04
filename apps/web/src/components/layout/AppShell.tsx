@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { useSocket } from "@/hooks/useSocket";
 import { Sidebar } from "./Sidebar";
@@ -12,13 +12,19 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const { connected } = useSocket();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-pos-bgPage">
-      <Sidebar />
+      <Sidebar collapsed={sidebarCollapsed} />
       <div className="flex min-h-screen flex-1 flex-col">
-        <TopBar connected={connected} title="Dashboard" />
-        <main className="layout-grid flex-1 px-5 py-5 lg:px-8 lg:py-7">{children}</main>
+        <TopBar
+          connected={connected}
+          onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
+          sidebarCollapsed={sidebarCollapsed}
+          title="Dashboard"
+        />
+        <main className="flex-1 px-5 py-5 lg:px-8 lg:py-7">{children}</main>
       </div>
     </div>
   );
