@@ -23,11 +23,11 @@ export function PowerMeter({ compact = false }: PowerMeterProps) {
 
   const chartData = Object.entries(usage.perRoomWatts).map(([roomName, watts]) => {
     const shortName =
-      roomName === "Drawing Room"
+      roomName === "drawing" || roomName === "Drawing Room"
         ? "Drawing"
-        : roomName === "Work Room 1"
+        : roomName === "work1" || roomName === "Work Room 1"
           ? "Work 1"
-          : roomName === "Work Room 2"
+          : roomName === "work2" || roomName === "Work Room 2"
             ? "Work 2"
             : roomName;
 
@@ -35,7 +35,6 @@ export function PowerMeter({ compact = false }: PowerMeterProps) {
       roomName,
       shortName,
       watts,
-      remainder: Math.max(0, 100 - watts),
     };
   });
 
@@ -59,11 +58,6 @@ export function PowerMeter({ compact = false }: PowerMeterProps) {
           <Bar dataKey="watts" stackId="usage" radius={[8, 8, 0, 0]}>
             {chartData.map((entry) => (
               <Cell key={entry.roomName} fill="#FE9F43" />
-            ))}
-          </Bar>
-          <Bar dataKey="remainder" stackId="usage" radius={[8, 8, 0, 0]}>
-            {chartData.map((entry) => (
-              <Cell key={`${entry.roomName}-remainder`} fill="#FDE2C4" />
             ))}
           </Bar>
         </BarChart>
