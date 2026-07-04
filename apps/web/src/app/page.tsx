@@ -46,17 +46,14 @@ export default function DashboardPage() {
     room.devices.some((device) => device.status === "on"),
   ).length;
   const dateRangeLabel = useMemo(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 6);
-
     const formatter = new Intl.DateTimeFormat("en-US", {
-      month: "2-digit",
-      day: "2-digit",
+      weekday: "long",
+      month: "long",
+      day: "numeric",
       year: "numeric",
     });
 
-    return `${formatter.format(start)} - ${formatter.format(end)}`;
+    return formatter.format(new Date());
   }, []);
 
   return (
